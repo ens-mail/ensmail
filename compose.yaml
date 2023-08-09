@@ -1,0 +1,38 @@
+services:
+  web:
+    build:
+      context: ./web
+      args:
+        PORT: ${WEB_PORT:-3000}
+    depends_on:
+      - "db"
+    restart: always
+    ports:
+      - ${WEB_PORT:-3000}:3000
+  db:
+    image: postgres:15
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME:-ensmail}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ensmail}
+      POSTGRES_DB: ${POSTGRES_DB:-ensmail}
+    restart: always
+    # ports: # in case you want to access the db from outside the docker network
+    #   - 5432:5432
+  haraka:
+    build: ./mail
+    ports:
+      - ${SMTP_PORT:-25}:25
+    volumes:
+      - ./tls:/usr/src/app/tls
+    depends_on:
+      - "web"
+    restart: always
+  # dovecot:
+  #   image: dovecot/dovecot:2.3.20
+  #   depends_on:
+  #     - "haraka"
+  #   restart: always
+volumes:
+  db-data:
